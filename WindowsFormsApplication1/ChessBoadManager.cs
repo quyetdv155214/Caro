@@ -17,6 +17,30 @@ namespace WindowsFormsApplication1
         private int currentPlayer;
         private TextBox playerName;
         private PictureBox playerMark;
+        private event EventHandler playerMarked;
+        public event EventHandler PlayerMarked
+        {
+            add
+            {
+                playerMarked += value;
+            }
+            remove
+            {
+                playerMarked -= value;
+            }
+        }
+        private event EventHandler endedGame;
+        public event EventHandler EndedGame
+        {
+            add
+            {
+                endedGame += value;
+            }
+            remove
+            {
+                endedGame -= value;
+            }
+        }
         #endregion
         #region initialize
         public ChessBoardManager(Panel chessBoard, TextBox playerName, PictureBox pbMark)
@@ -29,10 +53,7 @@ namespace WindowsFormsApplication1
             };
             this.PlayerName = playerName;
             this.playerMark = pbMark;
-            //
-            currentPlayer = 0;
-            //
-            changePlayer();
+           
 
         }
 
@@ -93,6 +114,12 @@ namespace WindowsFormsApplication1
         #region Methods
         public void drawChessBar()
         {
+            panelChessBoard.Enabled = true;
+            panelChessBoard.Controls.Clear();
+            //
+            currentPlayer = 0;
+            //
+            changePlayer();
             //  initialize matrix Button 
             MatrixButton = new List<List<Button>>();
 
@@ -100,7 +127,7 @@ namespace WindowsFormsApplication1
             for (int i = 0; i < Cons.NUM_OF_ROW; i++)
             {
                 MatrixButton.Add(new List<Button>());
-                
+
                 for (int j = 0; j < Cons.NUM_OF_COL; j++)
                 {
                     Button btn = new Button()
@@ -108,7 +135,8 @@ namespace WindowsFormsApplication1
                         Width = Cons.CHESS_WIDTH,
                         Height = Cons.CHESS_HEIGHT,
                         Location = new Point(oldButton.Location.X + oldButton.Width, oldButton.Location.Y)
-                        , BackgroundImageLayout = ImageLayout.Stretch,
+                        ,
+                        BackgroundImageLayout = ImageLayout.Stretch,
                         Tag = i.ToString() // save num row of button
 
                     };
@@ -132,15 +160,24 @@ namespace WindowsFormsApplication1
         {
             Button btn = (Button)sender;
             // check button da duoc bam 
-            if (btn.BackgroundImage != null)
-                return;
-            mark(btn);
-            changePlayer();
-            // check endGame;
-            if (isEndGame(btn))
+            if (panelChessBoard.Enabled)
             {
-                endGame();
+                if (btn.BackgroundImage != null)
+                    return;
+                mark(btn);
+                changePlayer();
+                if (playerMarked != null)
+                {
+                    playerMarked(this, new EventArgs());
+                }
+                // check endGame;
+
+                if (isEndGame(btn))
+                {
+                    endGame();
+                }
             }
+
 
         }
         private void mark(Button btn)
@@ -152,23 +189,23 @@ namespace WindowsFormsApplication1
         }
         private void changePlayer()
         {
-            
+
             playerName.Text = players[currentPlayer].Name;
             playerMark.Image = players[currentPlayer].Mark;
         }
-        #endregion
+
         private bool isEndGame(Button btn)
         {
-            return isEndGameHorizontal(btn) || isEndGameVertical(btn) 
+            return isEndGameHorizontal(btn) || isEndGameVertical(btn)
                 || isEndGameSub(btn) || isEndGamePrimary(btn);
         }
         // get chess location 
         private Point getChessPoint(Button btn)
         {
-            
+
             int vertical = Convert.ToInt32(btn.Tag);
             int horizontal = MatrixButton[vertical].IndexOf(btn);
-           Point point = new Point(horizontal, vertical);
+            Point point = new Point(horizontal, vertical);
             return point;
 
         }
@@ -178,13 +215,14 @@ namespace WindowsFormsApplication1
             // Count left 
             int countLeft = 0;
 
-            for(int i = point.X; i >= 0; i--)
+            for (int i = point.X; i >= 0; i--)
             {
-                if(MatrixButton[point.Y][i].BackgroundImage == btn.BackgroundImage)
+                if (MatrixButton[point.Y][i].BackgroundImage == btn.BackgroundImage)
                 {
                     countLeft++;
 
-                }else
+                }
+                else
                 {
                     break;
 
@@ -192,7 +230,7 @@ namespace WindowsFormsApplication1
             }
             // count right 
             int countRight = 0;
-            for (int i = point.X+1; i < Cons.CHESS_WIDTH; i++)
+            for (int i = point.X + 1; i < Cons.CHESS_WIDTH; i++)
             {
                 if (MatrixButton[point.Y][i].BackgroundImage == btn.BackgroundImage)
                 {
@@ -254,7 +292,7 @@ namespace WindowsFormsApplication1
             // Count top 
             int countTop = 0;
 
-            for (int i = 0; i <= point.X ; i++)
+            for (int i = 0; i <= point.X; i++)
             {
                 if (point.X - i < 0 || point.Y - i < 0)
                 {
@@ -273,13 +311,13 @@ namespace WindowsFormsApplication1
             }
             // count button 
             int countButton = 0;
-            for (int i =1; i <= Cons.CHESS_WIDTH - point.X; i++)
+            for (int i = 1; i <= Cons.CHESS_WIDTH - point.X; i++)
             {
-                if(point.X + i >= Cons.CHESS_WIDTH || point.Y -i >= Cons.CHESS_HEIGHT)
+                if (point.X + i >= Cons.CHESS_WIDTH || point.Y - i >= Cons.CHESS_HEIGHT)
                 {
                     break;
                 }
-                if (MatrixButton[point.Y + i][point.X+ i].BackgroundImage == btn.BackgroundImage)
+                if (MatrixButton[point.Y + i][point.X + i].BackgroundImage == btn.BackgroundImage)
                 {
                     countButton++;
 
@@ -292,7 +330,7 @@ namespace WindowsFormsApplication1
             }
 
             return (countTop + countButton) == 5;
-            
+
         }
         private bool isEndGameSub(Button btn)
         {
@@ -303,7 +341,7 @@ namespace WindowsFormsApplication1
 
             for (int i = 0; i <= point.X; i++)
             {
-                if (point.X + i >Cons.CHESS_WIDTH || point.Y - i < 0)
+                if (point.X + i > Cons.CHESS_WIDTH || point.Y - i < 0)
                 {
                     break;
                 }
@@ -340,10 +378,14 @@ namespace WindowsFormsApplication1
 
             return (countTop + countButton) == 5;
         }
-        private void endGame()
+        public void endGame()
         {
-            MessageBox.Show("End Game");
+            if (endedGame != null)
+            {
+                endedGame(this, new EventArgs());
+            }
         }
+        #endregion
 
 
 
