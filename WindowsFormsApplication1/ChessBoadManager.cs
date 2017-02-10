@@ -17,8 +17,10 @@ namespace WindowsFormsApplication1
         private int currentPlayer;
         private TextBox playerName;
         private PictureBox playerMark;
+        private Stack<PlayInfo> playTimeLine;
         private event EventHandler playerMarked;
         public event EventHandler PlayerMarked
+
         {
             add
             {
@@ -53,7 +55,8 @@ namespace WindowsFormsApplication1
             };
             this.PlayerName = playerName;
             this.playerMark = pbMark;
-           
+            PlayTimeLine = new Stack<PlayInfo>();
+
 
         }
 
@@ -108,6 +111,36 @@ namespace WindowsFormsApplication1
                 matrixButton = value;
             }
         }
+
+        public Stack<PlayInfo> PlayTimeLine
+        {
+            get
+            {
+                return playTimeLine;
+            }
+
+            set
+            {
+                playTimeLine = value;
+            }
+        }
+
+        public int CurrentPlayer
+        {
+            get
+            {
+                return currentPlayer;
+            }
+
+            set
+            {
+                currentPlayer = value;
+            }
+        }
+
+
+
+
         #endregion
 
 
@@ -117,7 +150,7 @@ namespace WindowsFormsApplication1
             panelChessBoard.Enabled = true;
             panelChessBoard.Controls.Clear();
             //
-            currentPlayer = 0;
+            CurrentPlayer = 0;
             //
             changePlayer();
             //  initialize matrix Button 
@@ -158,13 +191,25 @@ namespace WindowsFormsApplication1
 
         private void Btn_Click(object sender, EventArgs e)
         {
-            Button btn = (Button)sender;
+            
             // check button da duoc bam 
             if (panelChessBoard.Enabled)
             {
+                Button btn = sender as Button;
                 if (btn.BackgroundImage != null)
                     return;
                 mark(btn);
+                
+                // save play info to stack 
+                Point p = getChessPoint(btn);
+               
+                PlayTimeLine.Push(new PlayInfo(p, CurrentPlayer));
+                
+                
+                // change player
+                CurrentPlayer = CurrentPlayer == 1 ? 0 : 1;
+
+                
                 changePlayer();
                 if (playerMarked != null)
                 {
@@ -177,21 +222,24 @@ namespace WindowsFormsApplication1
                     endGame();
                 }
             }
+            else
+            {
+                return;
+            }
 
 
         }
         private void mark(Button btn)
         {
             // change button mark
-            btn.BackgroundImage = players[currentPlayer].Mark;
-            // change player
-            currentPlayer = currentPlayer == 1 ? 0 : 1;
+            btn.BackgroundImage = players[CurrentPlayer].Mark;
+
         }
         private void changePlayer()
         {
 
-            playerName.Text = players[currentPlayer].Name;
-            playerMark.Image = players[currentPlayer].Mark;
+            playerName.Text = players[CurrentPlayer].Name;
+            playerMark.Image = players[CurrentPlayer].Mark;
         }
 
         private bool isEndGame(Button btn)
@@ -202,9 +250,11 @@ namespace WindowsFormsApplication1
         // get chess location 
         private Point getChessPoint(Button btn)
         {
+            
 
             int vertical = Convert.ToInt32(btn.Tag);
             int horizontal = MatrixButton[vertical].IndexOf(btn);
+
             Point point = new Point(horizontal, vertical);
             return point;
 
@@ -384,6 +434,30 @@ namespace WindowsFormsApplication1
             {
                 endedGame(this, new EventArgs());
             }
+        }
+        public bool undo()
+        {
+            if (PlayTimeLine.Count <= 0)
+                return false;
+
+            PlayInfo oldPoint = PlayTimeLine.Pop();
+            Button btn = MatrixButton[oldPoint.Point.Y][oldPoint.Point.X];
+
+            btn.BackgroundImage = null;
+
+            if (PlayTimeLine.Count <= 0)
+            {
+                CurrentPlayer = 0;
+            }
+            else
+            {
+                oldPoint = PlayTimeLine.Peek();
+                CurrentPlayer = oldPoint.CurrentPlayer == 1 ? 0 : 1;
+            }
+
+            changePlayer();
+
+            return true;
         }
         #endregion
 

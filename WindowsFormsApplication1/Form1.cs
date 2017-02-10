@@ -74,10 +74,13 @@ namespace WindowsFormsApplication1
         }
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
+            timerCooldown.Stop();
             if (MessageBox.Show("Exit ?", "Message", MessageBoxButtons.OKCancel)
                  != System.Windows.Forms.DialogResult.OK)
-              
+            {
                 e.Cancel = true;
+                timerCooldown.Start();
+            }
 
         }
         #endregion
@@ -99,12 +102,16 @@ namespace WindowsFormsApplication1
 
             timerCooldown.Stop();
             panelChessBoard.Enabled = false;
+            undoToolStripMenuItem.Enabled = false;
+
             MessageBox.Show("End");
         }
         void newGame()
         {
             pbCoolDown.Value = 0;
             timerCooldown.Stop();
+            panelChessBoard.Enabled = true;
+            undoToolStripMenuItem.Enabled = false;
             chessBoard.drawChessBar();
         }
         void quit()
@@ -115,8 +122,9 @@ namespace WindowsFormsApplication1
         }
         void undo()
         {
-
+            chessBoard.undo();
         }
+        
 
 
         #endregion
