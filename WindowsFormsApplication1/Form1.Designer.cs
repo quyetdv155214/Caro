@@ -103,6 +103,7 @@
             this.btLan.TabIndex = 4;
             this.btLan.Text = "Connect";
             this.btLan.UseVisualStyleBackColor = true;
+            this.btLan.Click += new System.EventHandler(this.btLan_Click);
             // 
             // tbIP
             // 
@@ -207,6 +208,7 @@
             this.Name = "Form1";
             this.Text = "Game Caro";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
+            this.Shown += new System.EventHandler(this.Form1_Shown);
             this.panel2.ResumeLayout(false);
             this.panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.playerMark)).EndInit();
